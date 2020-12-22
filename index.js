@@ -2,7 +2,8 @@ const HTMLParser = require('./util/HTMLParser')
 const path = require('path')
 const defaultHandler = require('./lib/defaultHandler')
 
-let FIRST_FILE_PATH, HAS_SCRIPT_SECTION
+let 
+, HAS_SCRIPT_SECTION
 const ALL_PREFIXED_TAGS = new Map()
 
 /**
@@ -11,7 +12,7 @@ const ALL_PREFIXED_TAGS = new Map()
  * @param {Array} prefixes like [[prefix, path], ...]
  * @return {Map} [[tag, fullPath], ...]
  */
-const sortTagsList = (tags, prefixes) => {
+const sortTagsList = (tags, prefixes, relPath) => {
   const result = new Map();
   tags.forEach(tag => {
     const [prefix, block, elem] = tag.replace(/\B([A-Z])/g, '|$1').split('|', 3)
@@ -21,7 +22,7 @@ const sortTagsList = (tags, prefixes) => {
         result.set(tag, ALL_PREFIXED_TAGS.get(tag))
       } else {
         let parsedPath = (typeof handler === 'function')
-          ? handler(FIRST_FILE_PATH, {prefix, block, elem})
+          ? handler(relPath, {FIRST_FILE_PATH, block, elem}, relPath)
           : defaultHandler(handler)(FIRST_FILE_PATH, {prefix, block, elem})
         ALL_PREFIXED_TAGS.set(tag, parsedPath)
         result.set(tag, parsedPath)
@@ -37,7 +38,7 @@ const sortTagsList = (tags, prefixes) => {
  * @param {Array} prefixes  like [[prefix, path], ...]
  * @return {Map} as [[tag, fullPath]]
  */
-const getTagsList = (content, prefixes) => {
+const getTagsList = (content, prefixes, relPath) => {
   const tags = new Set()
   HTMLParser(content, {
     start({rawTagName: tag}) {
@@ -46,7 +47,7 @@ const getTagsList = (content, prefixes) => {
       tags.add(tag)
     }
   })
-  return sortTagsList(tags, prefixes)
+  return sortTagsList(tags, prefixes, relPath)
 }
 
 /**
@@ -55,9 +56,9 @@ const getTagsList = (content, prefixes) => {
  * @param {Array} prefixes  like [[prefix, path], ...]
  * @return {String} 
  */
-const makeFileImports = (content, prefixes) => {
+const makeFileImports = (content, prefixes, relPath) => {
   let imports = '\n'
-  const tagsList = getTagsList(content, prefixes)
+  const tagsList = getTagsList(content, prefixes, relPath)
   tagsList.forEach((fullPath, tag) => {
     imports += `import ${tag} from "${fullPath}"\n`
   })
@@ -84,7 +85,7 @@ const findPrefixTags = (prefixes) => ({content, filename}) => {
   const filePath = path.dirname(filename)
   FIRST_FILE_PATH = FIRST_FILE_PATH || filePath
   HAS_SCRIPT_SECTION = false
-  const imports = makeFileImports(content, prefixes)
+  const imports = makeFileImports(content, prefixes, filePath)
   const code = putImportsInMarkup(content, imports)
   return {code}
 }
