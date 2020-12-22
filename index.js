@@ -2,8 +2,7 @@ const HTMLParser = require('./util/HTMLParser')
 const path = require('path')
 const defaultHandler = require('./lib/defaultHandler')
 
-let 
-, HAS_SCRIPT_SECTION
+let FIRST_FILE_PATH, HAS_SCRIPT_SECTION
 const ALL_PREFIXED_TAGS = new Map()
 
 /**
